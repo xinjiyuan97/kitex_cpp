@@ -1,6 +1,7 @@
 #include "transport.hpp"
 
-EpollTransport::EpollTransport() {
+EpollTransport::EpollTransport(int fd) {
+    this->fd = fd;
     this->epoll_fd = epoll_create1(0);
     if (this->epoll_fd == -1) {
         LOG(ERROR) << "epoll create1 failed in EpollTransport::EpollTransport";
@@ -9,4 +10,16 @@ EpollTransport::EpollTransport() {
     this->event.events = EPOLLIN;
     this->event.data.fd = this->fd;
     epoll_ctl(this->epoll_fd, EPOLL_CTL_ADD, this->fd, &this->event);
+}
+
+void EpollTransport::send() {
+    return ;
+}
+
+void EpollTransport::recv() {
+    return;
+}
+
+void EpollTransport::close() {
+    return;
 }

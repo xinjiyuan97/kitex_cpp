@@ -11,7 +11,7 @@ class Transport {
 
 class EpollTransport : public Transport {
     public:
-        EpollTransport();
+        EpollTransport(int fd);
         void send();
         void recv();
         void close();
