@@ -7,6 +7,8 @@
 #include <netinet/in.h>
 #include <sys/epoll.h>
 #include <arpa/inet.h>
+#include <fstream>
+
 #define MAX_EVENTS 10
 using namespace std;
 
@@ -14,9 +16,10 @@ int main(int argc, char **argv) {
     google::SetStderrLogging(google::INFO);
     google::InitGoogleLogging(argv[0]);
 
+    ofstream fout("message.bin", ios::binary);
     
     
-    EpollTransport *transport = new EpollTransport(-1);
+   
     LOG(INFO) << "Server started";
 
     SocketContext context = {
@@ -25,20 +28,12 @@ int main(int argc, char **argv) {
         .Port = 8888,
         .MaxConnections = 5
     };
-    int server = createListener(context);
-    int epoll_fd;
-    if ((epoll_fd = epoll_create1(0)) == -1) {
-        close(server);
-        LOG(FATAL) << "epoll create1 failed in main";
-    }
 
-    struct epoll_event event, events[MAX_EVENTS];
-    event.data.fd = server;
-    event.events = EPOLLIN;
-    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, server, &event) == -1) {
-        close(server);
-        LOG(FATAL) << "epoll_ctl failed in main";
-    }
+    SocketUtil socketUtil = SocketUtil();
+    int server = socketUtil.createListener(context);
+    EpollTransport *transport = new EpollTransport();
+
+    struct epoll_event events[MAX_EVENTS];
 
     LOG(INFO) << "Server listening on port " << context.Port;
     struct sockaddr_in client_addr;
@@ -84,6 +79,8 @@ int main(int argc, char **argv) {
                 }
                 LOG(INFO) << "Received " << n << " bytes from client";
                 LOG(INFO) << "Message: " << buf;
+                fout.write(buf, n);
+                fout.close();
                 if (send(client_fd, buf, n, 0) == -1) {
                     LOG(ERROR) << "send failed in main " << strerror(errno);
                     close(client_fd);
